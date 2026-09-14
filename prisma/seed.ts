@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import type { FieldSurat } from "../src/lib/types";
 
@@ -344,13 +344,13 @@ async function main() {
         nama: js.nama,
         formatNomor: js.formatNomor,
         templateDokumen: js.templateDokumen,
-        skemaField: js.skemaField,
+        skemaField: js.skemaField as unknown as Prisma.InputJsonValue,
       },
       update: {
         nama: js.nama,
         formatNomor: js.formatNomor,
         templateDokumen: js.templateDokumen,
-        skemaField: js.skemaField,
+        skemaField: js.skemaField as unknown as Prisma.InputJsonValue,
       },
     });
   }
