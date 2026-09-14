@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ================== USER & ROLE ==================
+
+enum RoleStaff {
+  OPERATOR // input data & ajukan surat
+  SEKRETARIS // verifikasi
+  KEPALA_DESA // approve final
+  ADMIN // kelola sistem, master data, jenis surat
+}
+
+model User {
+  id        String    @id @default(cuid())
+  nama      String
+  email     String    @unique
+  password  String
+  role      RoleStaff
+  aktif     Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  pengajuanDibuat   PengajuanSurat[] @relation("DibuatOleh")
+  pengajuanDiproses PengajuanSurat[] @relation("DiprosesOleh")
+
+  @@map("users")
+}
+
+// ================== DATA WARGA (master, terisi bertahap) ==================
+
+model Warga {
+  id               String    @id @default(cuid())
+  nik              String    @unique
+  noKK             String?
+  nama             String
+  tempatLahir      String?
+  tanggalLahir     DateTime?
+  jenisKelamin     String? // L / P
+  agama            String?
+  statusPerkawinan String?
+  pekerjaan        String?
+  kewarganegaraan  String    @default("WNI")
+  alamat           String?
+  rt               String?
+  rw               String?
+  noHp             String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  pengajuanSurat PengajuanSurat[]
+
+  @@index([nik])
+  @@index([nama])
+  @@map("warga")
+}
+
+// ================== JENIS SURAT (dikelola dinamis) ==================
+
+model JenisSurat {
+  id              String   @id @default(cuid())
+  kode            String   @unique // misal: "SKD", "SKTM", "SKU"
+  nama            String // "Surat Keterangan Domisili"
+  deskripsi       String?
+  formatNomor     String // misal: "{nomor_urut}/{kode}/{desa}/{bulan_romawi}/{tahun}"
+  skemaField      Json // definisi field dinamis, lihat contoh di lib/jenis-surat-example.ts
+  templateDokumen String? // path/reference ke template PDF atau docx
+  aktif           Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  pengajuanSurat PengajuanSurat[]
+  counterNomor   CounterNomorSurat[]
+
+  @@map("jenis_surat")
+}
+
+// ================== PENOMORAN OTOMATIS ==================
+
+model CounterNomorSurat {
+  id              String     @id @default(cuid())
+  jenisSuratId    String
+  jenisSurat      JenisSurat @relation(fields: [jenisSuratId], references: [id])
+  tahun           Int
+  counterTerakhir Int        @default(0)
+
+  @@unique([jenisSuratId, tahun])
+  @@map("counter_nomor_surat")
+}
+
+// ================== PENGAJUAN SURAT ==================
+
+enum StatusPengajuan {
+  DIAJUKAN
+  DIPROSES
+  DISETUJUI
+  DITOLAK
+  DICETAK
+}
+
+model PengajuanSurat {
+  id         String  @id @default(cuid())
+  nomorSurat String? @unique // diisi saat disetujui/dicetak
+
+  jenisSuratId String
+  jenisSurat   JenisSurat @relation(fields: [jenisSuratId], references: [id])
+
+  wargaId String? // nullable — kalau pemohon belum ada di master data
+  warga   Warga?  @relation(fields: [wargaId], references: [id])
+
+  // fallback kalau pemohon belum tercatat di master Warga
+  namaPemohon String?
+  nikPemohon  String?
+
+  dataForm Json // isian field dinamis sesuai skemaField JenisSurat
+
+  status  StatusPengajuan @default(DIAJUKAN)
+  catatan String?
+
+  dibuatOlehId String
+  dibuatOleh   User   @relation("DibuatOleh", fields: [dibuatOlehId], references: [id])
+
+  diprosesOlehId String?
+  diprosesOleh   User?   @relation("DiprosesOleh", fields: [diprosesOlehId], references: [id])
+
+  tanggalDiajukan DateTime  @default(now())
+  tanggalDiproses DateTime?
+  tanggalDicetak  DateTime?
+
+  kodeVerifikasi String? @unique @default(cuid()) // disiapkan untuk fitur QR verifikasi di masa depan
+
+  @@index([status])
+  @@index([jenisSuratId])
+  @@map("pengajuan_surat")
+}
