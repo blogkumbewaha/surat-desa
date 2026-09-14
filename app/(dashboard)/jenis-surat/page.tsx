@@ -15,8 +15,7 @@ export default async function JenisSuratPage() {
       <div className="mb-6">
         <h2 className="text-2xl font-semibold text-slate-900">Jenis Surat</h2>
         <p className="mt-1 text-sm text-slate-500">
-          {daftar.length} jenis surat terdaftar. Kelola dari `prisma/seed.ts` untuk sekarang —
-          halaman tambah/edit dari UI menyusul.
+          {daftar.length} jenis surat terdaftar.
         </p>
       </div>
 
