@@ -153,13 +153,7 @@ export default function AksiPengajuan({
           >
             {downloading === "asli" ? "Menyiapkan..." : labelAsli}
           </button>
-          <button
-            onClick={() => unduh("pdf")}
-            disabled={downloading !== null}
-            className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-          >
-            {downloading === "pdf" ? "Menyiapkan..." : "Unduh PDF"}
-          </button>
+          
         </div>
         {tombolHapus}
       </div>
