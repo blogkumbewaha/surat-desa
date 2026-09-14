@@ -1,109 +1,100 @@
-```markdown
 # Sistem Surat Desa
 
-Aplikasi otomasi surat desa (12 jenis surat) dengan alur pengajuan → persetujuan →
-cetak (Word/Excel), dibangun dengan Next.js (App Router) + PostgreSQL + Prisma.
+Aplikasi otomasi administrasi dan pelayanan 12 jenis surat desa dengan alur kerja terintegrasi: **Pengajuan ➔ Persetujuan ➔ Pencetakan**. 
 
-## Login Default
+Sistem ini dirancang menggunakan arsitektur modern berbasis **Next.js (App Router)**, **PostgreSQL**, dan **Prisma ORM**.
 
-Setelah `npm run db:seed`, akun admin default:
-
-```
-Email    : admin@desa.id
-Password : admin123
-```
-
-**Segera ganti password ini** kalau sistem sudah mulai dipakai sungguhan
-(lewat Prisma Studio, update kolom `password` dengan hash bcrypt baru).
+---
 
 ## Struktur Proyek
 
-```
+```text
 src/
-  middleware.ts           # proteksi semua halaman & API + batasi rute admin, redirect ke /login kalau belum masuk
-  app/
-    login/                 # halaman login (fungsional, cek email+password ke database)
-    (dashboard)/            # halaman internal staf desa (wajib login)
-      layout.tsx             # sidebar + info user login + tombol keluar
-      dashboard/              # ringkasan statistik
-      pengajuan-surat/
-        page.tsx                # daftar semua pengajuan
-        baru/page.tsx           # form buat pengajuan baru (field dinamis sesuai jenis surat)
-        baru/FieldTabelDinamis.tsx  # sub-form tabel dinamis (mis. anggota keluarga di formulir KK)
-        [id]/page.tsx           # detail + tombol Setujui/Tolak/Unduh Word-Excel/Unduh PDF
-        [id]/AksiPengajuan.tsx  # client component tombol aksi (disesuaikan per role)
-      warga/page.tsx          # daftar + tambah + edit data warga
-      jenis-surat/page.tsx     # daftar jenis surat, field-nya, dan atur nomor urut terakhir
-      jenis-surat/AturCounter.tsx  # sub-component atur nomor urut terakhir (admin only)
-      pengguna/page.tsx        # kelola akun & peran user (admin only)
-    api/
-      auth/login, auth/logout     # login & logout (set/hapus session cookie)
-      users/                        # list, buat, ubah peran/status user (admin only)
-      pengajuan-surat/             # CRUD + setujui/tolak/cetak (dibatasi per peran)
-      jenis-surat/                  # list & create jenis surat
-      jenis-surat/[id]/counter/      # lihat & set nomor urut terakhir per jenis surat
-      warga/                         # cari/list & create/update warga
-  lib/
-    session.ts             # buat & verifikasi JWT session, baca session di server component
-    auth-guard.ts            # helper cek peran (role-based access)
-    prisma.ts               # Prisma client singleton
-    nomor-surat.ts            # generator nomor surat otomatis
-    generate-dokumen.ts        # render template docx + data pengajuan -> buffer docx
-    generate-dokumen-xlsx.ts     # khusus formulir KK: isi template xlsx per koordinat sel
-    convert-pdf.ts               # convert buffer docx/xlsx -> pdf pakai LibreOffice
-    format.ts                     # format tanggal Indonesia, parsing komponen nomor surat
-    jenis-kelamin.ts                # konversi label <-> kode Jenis Kelamin (L/P)
-    types.ts                       # tipe FieldSurat (skema field dinamis, termasuk tipe "table")
-templates/                # 12 file template (.docx & .xlsx) dengan placeholder {field_name}
-prisma/
-  schema.prisma            # skema database
-  seed.ts                  # 12 jenis surat + akun admin default
+├── app/
+│   ├── login/                      # Halaman autentikasi utama (cek email & password)
+│   ├── (dashboard)/                # Area internal staf desa (wajib login)
+│   │   ├── layout.tsx              # Sidebar, profil user, & tombol logout
+│   │   ├── dashboard/              # Panel ringkasan & statistik surat
+│   │   ├── pengajuan-surat/
+│   │   │   ├── page.tsx            # Daftar dan monitoring pengajuan surat
+│   │   │   ├── baru/
+│   │   │   │   ├── page.tsx        # Form pengajuan baru (form field dinamis)
+│   │   │   │   └── FieldTabel.tsx  # Sub-form tabel dinamis (mis. Anggota KK)
+│   │   │   └── [id]/
+│   │   │       ├── page.tsx        # Detail pengajuan & kontrol cetak dokumen
+│   │   │       └── AksiPengajuan.tsx# Client component tombol aksi (RBAC)
+│   │   ├── warga/page.tsx          # Manajemen master data warga desa
+│   │   ├── jenis-surat/
+│   │   │   ├── page.tsx            # Konfigurasi field surat & counter nomor urut
+│   │   │   └── AturCounter.tsx     # Panel kontrol nomor urut (Admin Only)
+│   │   └── pengguna/page.tsx       # Manajemen akun & hak akses staf (Admin Only)
+│   └── api/                        # Endpoint REST API backend terproteksi
+│       ├── auth/                   # Endpoint login & logout (Session Cookie)
+│       ├── users/                  # CRUD pengelolaan data pengguna (Admin Only)
+│       ├── pengajuan-surat/        # Engine CRUD, persetujuan, & generate dokumen
+│       ├── jenis-surat/            # Pengaturan metadata format surat
+│       └── warga/                  # Pencarian otomatis & manajemen warga
+├── lib/                            # Modul utilitas & core bisnis logic
+│   ├── session.ts                  # Manajemen JWT session & server-side verification
+│   ├── auth-guard.ts               # Helper otorisasi berbasis peran (RBAC)
+│   ├── prisma.ts                   # Instance singleton Prisma Client
+│   ├── nomor-surat.ts              # Generator nomor surat otomatis berbasis kode
+│   ├── generate-dokumen.ts         # Engine pengisi data ke template .docx
+│   ├── generate-dokumen-xlsx.ts    # Engine pengisi koordinat sel template .xlsx (Form KK)
+│   ├── convert-pdf.ts              # Driver konversi dokumen ke PDF (LibreOffice)
+│   └── format.ts                   # Utility parsing & lokalisasi tanggal Indonesia
+├── middleware.ts                   # Gatekeeper rute global (Proteksi & Redirect)
+├── prisma/                         # Konfigurasi database relasional
+│   ├── schema.prisma               # Definisi skema basis data
+│   └── seed.ts                     # Seeder master jenis surat & akun admin
+└── templates/                      # Direktori 12 berkas template dinamis (.docx & .xlsx)
 ```
 
-## Template Surat (folder `templates/`)
+---
 
-| File | Jenis Surat | Kode |
-|---|---|---|
-| `suket-kenal-lahir.docx` | Surat Keterangan Kenal Lahir | SKL |
-| `pengantar-permohonan-izin-keramaian.docx` | Pengantar Permohonan Izin Keramaian | SPIK |
-| `suket-berkelakuan-baik.docx` | Surat Keterangan Berkelakuan Baik | SKBB |
-| `suket-domisili.docx` | Surat Keterangan Domisili | SKD |
-| `suket-kematian.docx` | Surat Keterangan Kematian (+ Pemakaman) | SKK |
-| `suket-penghasilan.docx` | Surat Keterangan Penghasilan | SKPH |
-| `suket-telah-menikah.docx` | Surat Keterangan Telah Menikah | SKTMK |
-| `suket-tidak-berada-ditempat.docx` | Surat Keterangan Tidak Berada di Tempat | SKTBD |
-| `suket-tidak-mampu.docx` | Surat Keterangan Tidak Mampu | SKTM |
-| `suket-usaha.docx` | Surat Keterangan Usaha | SKU |
-| `formulir-pengantar-nikah.docx` | Formulir Pengantar Nikah (Model N1-N5, KUA) | NIKAH |
-| `formulir-kk.xlsx` | Formulir Pengantar Kartu Keluarga (KK) | FKK |
+## Inventaris Template Surat (`templates/`)
 
-## Alur Pemakaian End-to-End
+Sistem mengotomatisasi pencetakan berkas template menggunakan placeholder variabel `{field_name}` dengan format berkas berikut:
 
-1. **Login**
-2. **Buat pengajuan** → `/pengajuan-surat/baru` → pilih jenis surat → cari
-   warga (opsional, buat auto-isi) → isi/edit "Data Pemohon" (Nama, NIK,
-   Tempat/Tanggal Lahir, Jenis Kelamin, Pekerjaan, Alamat) → isi field
-   tambahan spesifik jenis surat kalau ada → Ajukan
-   - Data Pemohon ini **selalu di-upsert ke tabel Warga berdasarkan NIK** —
-     kalau NIK sudah pernah tercatat, datanya diperbarui (mis. ganti
-     pekerjaan); kalau belum, dibuat baru. Jadi pengajuan berikutnya oleh
-     orang yang sama tinggal cari namanya, dan datanya sudah paling baru.
-3. **Lihat & proses** → `/pengajuan-surat` → klik Detail → tombol Setujui/Tolak
-   (khusus peran SEKRETARIS/KEPALA_DESA/ADMIN — OPERATOR cuma bisa lihat)
-4. **Setujui** → nomor surat otomatis dibuat (format sesuai kode klasifikasi asli)
-5. **Unduh surat** → tombol "Unduh Word/Excel" atau "Unduh PDF" muncul,
-   dokumen sudah terisi otomatis, siap print (tanda tangan & stempel manual)
+| Nama Berkas | Jenis Pelayanan Surat | Kode Klasifikasi |
+| :--- | :--- | :---: |
+| `suket-kenal-lahir.docx` | Surat Keterangan Kenal Lahir | `SKL` |
+| `pengantar-permohonan-izin-keramaian.docx` | Pengantar Permohonan Izin Keramaian | `SPIK` |
+| `suket-berkelakuan-baik.docx` | Surat Keterangan Berkelakuan Baik | `SKBB` |
+| `suket-domisili.docx` | Surat Keterangan Domisili | `SKD` |
+| `suket-kematian.docx` | Surat Keterangan Kematian & Pemakaman | `SKK` |
+| `suket-penghasilan.docx` | Surat Keterangan Penghasilan | `SKPH` |
+| `suket-telah-menikah.docx` | Surat Keterangan Telah Menikah | `SKTMK` |
+| `suket-tidak-berada-ditempat.docx` | Surat Keterangan Tidak Berada di Tempat | `SKTBD` |
+| `suket-tidak-mampu.docx` | Surat Keterangan Tidak Mampu | `SKTM` |
+| `suket-usaha.docx` | Surat Keterangan Usaha | `SKU` |
+| `formulir-pengantar-nikah.docx` | Formulir Pengantar Nikah (Model N1-N5 KUA) | `NIKAH` |
+| `formulir-kk.xlsx` | Formulir Pengantar Kartu Keluarga (KK) | `FKK` |
 
-## Peran & Akses
+---
 
-| Aksi | OPERATOR | SEKRETARIS | KEPALA_DESA | ADMIN |
-|---|---|---|---|---|
-| Input pengajuan surat | ✅ | ✅ | ✅ | ✅ |
-| Setujui / Tolak surat | ❌ | ✅ | ✅ | ✅ |
-| Hapus pengajuan | ❌ | ❌ | ❌ | ✅ |
-| Kelola jenis surat & nomor urut | ❌ | ❌ | ❌ | ✅ |
-| Kelola pengguna | ❌ | ❌ | ❌ | ✅ |
+## Alur Pemakaian Sistem (End-to-End)
 
-Kelola pengguna & peran lewat halaman **Pengguna** (muncul di sidebar khusus
-akun ADMIN).
-```
+1. **Autentikasi** ➔ Staf masuk menggunakan akun masing-masing melalui halaman `/login`.
+2. **Pengisian Formulir** ➔ Navigasi ke `/pengajuan-surat/baru` ➔ Pilih Jenis Surat.
+   * *Fitur Smart-Fill:* Cari nama warga untuk pengisian otomatis, atau isi manual "Data Pemohon" (NIK, Nama, TTL, Alamat, Pekerjaan).
+   * *Mekanisme Upsert:* Data pemohon akan otomatis di-*upsert* ke tabel `Warga` berdasarkan NIK. Jika data sudah ada, sistem akan memperbarui profilnya secara otomatis.
+3. **Validasi & Verifikasi** ➔ Pemeriksa membuka detail pengajuan di `/pengajuan-surat/[id]` untuk menyetujui atau menolak permohonan.
+4. **Penomoran Otomatis** ➔ Begitu status berubah menjadi **DISETUJUI**, sistem langsung men-generate nomor surat unik sesuai format klasifikasi desa.
+5. **Pencetakan** ➔ Tombol unduh berkas aktif. Dokumen terunduh dalam kondisi data terisi sempurna dan siap dicetak untuk tanda tangan fisik.
+
+---
+
+## Matriks Hak Akses & Peran (RBAC)
+
+Sistem membatasi fitur berdasarkan peran yang dimiliki pengguna demi menjaga validitas dokumen data desa:
+
+| Hak Akses / Fitur | OPERATOR | SEKRETARIS | KEPALA_DESA | ADMIN |
+| :--- | :---: | :---: | :---: | :---: |
+| Input & Ajukan Surat | ✅ | ✅ | ✅ | ✅ |
+| Setujui / Tolak Pengajuan | ❌ | ✅ | ✅ | ✅ |
+| Hapus Riwayat Pengajuan | ❌ | ❌ | ❌ | ✅ |
+| Konfigurasi & Counter Surat | ❌ | ❌ | ❌ | ✅ |
+| Manajemen Akun Pengguna | ❌ | ❌ | ❌ | ✅ |
+
+*Catatan: Modul pengelolaan akun hanya dapat diakses oleh pemilik peran **ADMIN** melalui menu **Pengguna** yang tertera pada sidebar dashboard.*
