@@ -41,7 +41,6 @@ src/
 │   ├── nomor-surat.ts              # Generator nomor surat otomatis berbasis kode
 │   ├── generate-dokumen.ts         # Engine pengisi data ke template .docx
 │   ├── generate-dokumen-xlsx.ts    # Engine pengisi koordinat sel template .xlsx (Form KK)
-│   ├── convert-pdf.ts              # Driver konversi dokumen ke PDF (LibreOffice)
 │   └── format.ts                   # Utility parsing & lokalisasi tanggal Indonesia
 ├── middleware.ts                   # Gatekeeper rute global (Proteksi & Redirect)
 ├── prisma/                         # Konfigurasi database relasional
