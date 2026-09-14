@@ -12,7 +12,7 @@ export async function GET() {
   }
 
   const data = await prisma.user.findMany({
-    select: { id: true, nama: true, username: true, role: true, aktif: true, createdAt: true },
+    select: { id: true, nama: true, email: true, role: true, aktif: true, createdAt: true },
     orderBy: { createdAt: "asc" },
   });
 
@@ -20,18 +20,18 @@ export async function GET() {
 }
 
 // POST /api/users — buat pengguna baru
-// body: { nama, username, password, role }
+// body: { nama, email, password, role }
 export async function POST(req: NextRequest) {
   const session = await getSession();
   if (!cekPeran(session, PERAN_ADMIN)) {
     return NextResponse.json({ error: "Khusus admin" }, { status: 403 });
   }
 
-  const { nama, username, password, role } = await req.json();
+  const { nama, email, password, role } = await req.json();
 
-  if (!nama || !username || !password || !role) {
+  if (!nama || !email || !password || !role) {
     return NextResponse.json(
-      { error: "nama, username, password, dan role wajib diisi" },
+      { error: "nama, email, password, dan role wajib diisi" },
       { status: 400 }
     );
   }
@@ -43,15 +43,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Role tidak valid" }, { status: 400 });
   }
 
-  const sudahAda = await prisma.user.findUnique({ where: { username } });
+  const sudahAda = await prisma.user.findUnique({ where: { email } });
   if (sudahAda) {
-    return NextResponse.json({ error: "Username sudah dipakai" }, { status: 400 });
+    return NextResponse.json({ error: "Email sudah dipakai" }, { status: 400 });
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({
-    data: { nama, username, password: hashedPassword, role },
-    select: { id: true, nama: true, username: true, role: true, aktif: true },
+    data: { nama, email, password: hashedPassword, role },
+    select: { id: true, nama: true, email: true, role: true, aktif: true },
   });
 
   return NextResponse.json({ data: user }, { status: 201 });

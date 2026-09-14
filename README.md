@@ -17,22 +17,12 @@ pernah menjalankan `npx prisma migrate dev` sebelumnya dan punya folder
 Kalau tidak, Prisma akan mendeteksi "drift" lagi (database sudah ada isi tapi
 riwayat migrasi lokal hilang) dan minta reset database dari nol.
 
-**Kalau update ke versi ini** (field login `email` diganti jadi `username`):
-kolom `email` di tabel `users` berubah nama jadi `username`, jadi **wajib**
-jalankan `npx prisma migrate dev` lagi (akan bikin migrasi baru untuk rename
-kolom ini) — kalau prisma minta konfirmasi "drop/rename column", pilih opsi
-rename (bukan drop+create) supaya data akun yang sudah ada tidak hilang. Kalau
-ragu atau muncul error, paling aman: `npx prisma migrate reset` lalu
-`npm run db:seed` ulang (akun-akun yang sempat kamu buat manual lewat halaman
-Pengguna perlu dibuat ulang, tapi akun admin default otomatis balik ke
-`admindesa` / `admin123`).
-
 ## Login Default
 
 Setelah `npm run db:seed`, akun admin default:
 
 ```
-Username : admindesa
+Email    : admin@desa.id
 Password : admin123
 ```
 
@@ -45,7 +35,7 @@ Password : admin123
 src/
   middleware.ts           # proteksi semua halaman & API, redirect ke /login kalau belum masuk
   app/
-    login/                 # halaman login (fungsional, cek username+password ke database)
+    login/                 # halaman login (fungsional, cek email+password ke database)
     (dashboard)/            # halaman internal staf desa (wajib login)
       layout.tsx             # sidebar + info user login + tombol keluar
       dashboard/              # ringkasan statistik
@@ -102,7 +92,7 @@ prisma/
    npm run dev
    ```
 
-6. Buka http://localhost:3000, login dengan `admindesa` / `admin123`
+6. Buka http://localhost:3000, login dengan `admin@desa.id` / `admin123`
 
 ## Fitur Cetak PDF — Perlu LibreOffice
 
@@ -144,7 +134,7 @@ kalau mau dipakai serius untuk jenis surat ini.
 
 ## Alur Pemakaian End-to-End (sudah ditest semua)
 
-1. **Login** → `admindesa` / `admin123`
+1. **Login** → `admin@desa.id` / `admin123`
 2. **Buat pengajuan** → `/pengajuan-surat/baru` → pilih jenis surat → cari
    warga (opsional, buat auto-isi) → isi/edit "Data Pemohon" (Nama, NIK,
    Tempat/Tanggal Lahir, Jenis Kelamin, Pekerjaan, Alamat) → isi field

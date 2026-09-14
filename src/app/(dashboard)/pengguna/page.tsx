@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 interface User {
   id: string;
   nama: string;
-  username: string;
+  email: string;
   role: string;
   aktif: boolean;
 }
@@ -17,7 +17,7 @@ const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Admin",
 };
 
-const FORM_KOSONG = { nama: "", username: "", password: "", role: "OPERATOR" };
+const FORM_KOSONG = { nama: "", email: "", password: "", role: "OPERATOR" };
 
 export default function PenggunaPage() {
   const [daftar, setDaftar] = useState<User[]>([]);
@@ -121,10 +121,10 @@ export default function PenggunaPage() {
           />
           <input
             required
-            type="text"
-            placeholder="Username"
-            value={form.username}
-            onChange={(e) => setForm({ ...form, username: e.target.value })}
+            type="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
             className={inputClass}
           />
           <input
@@ -159,7 +159,7 @@ export default function PenggunaPage() {
           <thead className="border-b border-slate-200 bg-slate-50 text-left text-slate-500">
             <tr>
               <th className="px-4 py-3 font-medium">Nama</th>
-              <th className="px-4 py-3 font-medium">Username</th>
+              <th className="px-4 py-3 font-medium">Email</th>
               <th className="px-4 py-3 font-medium">Peran</th>
               <th className="px-4 py-3 font-medium">Status</th>
             </tr>
@@ -168,7 +168,7 @@ export default function PenggunaPage() {
             {daftar.map((u) => (
               <tr key={u.id} className="border-b border-slate-100 last:border-0">
                 <td className="px-4 py-3 text-slate-900">{u.nama}</td>
-                <td className="px-4 py-3 text-slate-600">{u.username}</td>
+                <td className="px-4 py-3 text-slate-600">{u.email}</td>
                 <td className="px-4 py-3">
                   <select
                     value={u.role}
